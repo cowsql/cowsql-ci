@@ -1,8 +1,10 @@
+testbed=
+
 setup_nvme() {
     device=$1
     disk=$(echo "${device}" | sed -e 's|p1$||')
 
-    if [ -e "${device}" ]; then
+    if [ -e "${device}" ] || [ "${testbed}" = "local" ]; then
         return
     fi
 
