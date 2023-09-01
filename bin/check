@@ -3,7 +3,13 @@ set -eu
 
 cd "$(dirname "${0}")"
 
-testbed=
+. ../lib/config.sh
+. ../lib/render.sh
+. ../lib/install.sh
+. ../lib/setup.sh
+. ../lib/benchmark.sh
+
+testbed=local
 
 usage() {
 	USAGE_STRING="\
@@ -24,6 +30,24 @@ Run cowsql checks
 			exit 1
 			;;
 	esac
+}
+
+cleanup() {
+    set +e
+
+    rm -f "${config}"
+
+    if [ "${FAIL}" = "1" ]; then
+        echo ""
+        echo "Checks failed"
+        exit 1
+    fi
+
+    exit 0
+}
+
+run() {
+    benchmark
 }
 
 if ! temp=$(getopt -o 't:h' --long 'testbed:,help' -n "$0" -- "$@"); then
@@ -55,9 +79,32 @@ done
 case "${testbed}" in
     lxc)
         . ../lib/lxc.sh
-        ;;
-    *)
-        echo "unknown testbed: \"${testbed}\""
-        exit 1
+        exit 0
         ;;
 esac
+
+FAIL=1
+trap cleanup EXIT HUP INT TERM
+
+if [ ! -e "../cfg/${testbed}.cfg" ]; then
+    echo "no config for ${testbed} found in cfg directory"
+    exit 1
+fi
+
+config="$(mktemp)"
+render  "../cfg/${testbed}.cfg" > "${config}"
+
+for item in $(get global install); do
+    install_"${item}"
+done
+
+for device in $(get global device); do
+    setup_device "${device}"
+done
+
+for version in $(get global version); do
+    install_cowsql "${version}"
+    run
+done
+
+FAIL=0
