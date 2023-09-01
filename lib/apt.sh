@@ -1,3 +1,5 @@
+export DEBIAN_FRONTEND=noninteractive
+
 apt_update() {
     while :; do
         sudo apt-get update -qq && break
@@ -10,5 +12,5 @@ apt_install() {
 }
 
 apt_remove() {
-    sudo apt-get purge -qq -y "${@}" || true
+    sudo apt-get purge -qq -y "${@}" > /dev/null 2>&1 || true
 }
