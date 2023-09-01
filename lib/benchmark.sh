@@ -6,6 +6,9 @@ cmd_raft_benchmark() {
     if [ "${version}" = "local" ]; then
         cmd=$(get raft path)/tools/$cmd
     fi
+    if grep -q isolcpus /proc/cmdline; then
+        cmd="taskset --cpu-list 3 ${cmd}"
+    fi
     echo "${cmd}"
 }
 
