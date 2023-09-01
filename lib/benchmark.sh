@@ -38,7 +38,7 @@ benchmark_disk_filesystem() {
                       "sudo $(cmd_raft_benchmark) disk -d ${mountpoint} -b ${buffer}"
 }
 
-benchmark_disk() {
+benchmark_disk_device() {
     device=${1}
 
     case $device in
@@ -70,8 +70,20 @@ benchmark_disk() {
     done
 }
 
+benchmark_disk_directory() {
+    directory=$1
+    for buffer in $(get benchmark-disk buffer); do
+        maybe_bencher_run --project raft --testbed "${testbed}" \
+                          "$(cmd_raft_benchmark) disk -d ${directory} -b ${buffer}"
+    done
+}
+
 benchmark() {
     for device in $(get global device); do
-        benchmark_disk "${device}"
+        benchmark_disk_device "${device}"
+    done
+
+    for directory in $(get benchmark-disk directory); do
+        benchmark_disk_directory "${directory}"
     done
 }
