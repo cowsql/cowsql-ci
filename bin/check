@@ -76,13 +76,6 @@ while true; do
     esac
 done
 
-case "${testbed}" in
-    lxc)
-        . ../lib/lxc.sh
-        exit 0
-        ;;
-esac
-
 FAIL=1
 trap cleanup EXIT HUP INT TERM
 
