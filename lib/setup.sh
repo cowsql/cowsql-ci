@@ -51,8 +51,8 @@ setup_filesystem() {
 
     case $filesystem in
         ext4)
-	    sudo mkfs.ext4 -F "${device}"
-            sudo tune2fs -O ^has_journal "${device}"
+	    sudo mkfs.ext4 -F "${device}" > /dev/null 2>&1
+            sudo tune2fs -O ^has_journal "${device}" > /dev/null 2>&1
 	    sudo mount "${device}" "${mountpoint}"
             ;;
         btrfs)
