@@ -1,3 +1,5 @@
+. ../lib/setup.sh
+
 testbed=
 version=
 
@@ -26,22 +28,7 @@ maybe_bencher_run() {
     fi
 }
 
-benchmark_disk_raw() {
-    device=$1
-    buffer=$2
-    maybe_bencher_run --project raft --testbed "${testbed}-${driver}-raw" \
-                      "sudo $(cmd_raft_benchmark) disk -d ${device} -b ${buffer}"
-}
-
-benchmark_disk_filesystem() {
-    filesystem=$1
-    mountpoint=$2
-    buffer=$3
-    maybe_bencher_run --project raft --testbed "${testbed}-${driver}-${filesystem}" \
-                      "sudo $(cmd_raft_benchmark) disk -d ${mountpoint} -b ${buffer}"
-}
-
-benchmark_disk_device() {
+block_driver_name() {
     device=${1}
 
     case $device in
@@ -57,36 +44,52 @@ benchmark_disk_device() {
             ;;
     esac
 
-    # Raw device benchmark
-    for buffer in $(get benchmark-disk buffer); do
-        benchmark_disk_raw "${device}" "${buffer}"
-    done
-
-    # File system benchmarks
-    for filesystem in $(get benchmark-disk filesystem); do
-        mountpoint=/mnt
-        setup_filesystem "${device}" "${filesystem}" "${mountpoint}"
-        for buffer in $(get benchmark-disk buffer); do
-            benchmark_disk_filesystem "${filesystem}" "${mountpoint}" "${buffer}"
-        done
-        sudo umount /mnt
-    done
+    echo $driver
 }
 
-benchmark_disk_directory() {
-    directory=$1
+benchmark_disk_target() {
+    tag=$1
+    target=$2
+    args="disk -d ${target}"
+
+    size=$(get benchmark-disk size)
+    if [ -n "${size}" ]; then
+        args="${args} -s ${size}"
+    fi
+
     for buffer in $(get benchmark-disk buffer); do
-        maybe_bencher_run --project raft --testbed "${testbed}" \
-                          "$(cmd_raft_benchmark) disk -d ${directory} -b ${buffer}"
+        maybe_bencher_run --project raft --testbed "${tag}" \
+                          "sudo $(cmd_raft_benchmark) ${args} -b ${buffer}"
     done
 }
 
 benchmark_disk() {
-    for device in $(get global device); do
-        benchmark_disk_device "${device}"
-    done
+    for storage in $(get benchmark-disk storage); do
+        unmount=no
 
-    for directory in $(get benchmark-disk directory); do
-        benchmark_disk_directory "${directory}"
+        if echo "${storage}" | grep -qe ^/dev; then
+            device=$(echo "${storage}" | cut -f 1 -d :)
+            filesystem=$(echo "${storage}" | cut -f 2 -d :)
+            driver=$(block_driver_name "${device}")
+            tag="${testbed}-${driver}-${filesystem}"
+
+            setup_device "${device}"
+            if [ "${filesystem}" = "raw" ]; then
+                target="${device}"
+            else
+                setup_filesystem "${device}" "${filesystem}" /mnt
+                target=/mnt
+                unmount=yes
+            fi
+        else
+            tag="${testbed}"
+            target="${storage}"
+        fi
+
+        benchmark_disk_target "${tag}" "${target}"
+
+        if [ "${unmount}" = "yes" ]; then
+            sudo umount "${target}"
+        fi
     done
 }
