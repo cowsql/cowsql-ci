@@ -12,5 +12,7 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - uses: ludeeus/action-shellcheck@master
+      env:
+        SHELLCHECK_OPTS: ‐‐shell=sh
       with:
         ignore_names: "esh"
