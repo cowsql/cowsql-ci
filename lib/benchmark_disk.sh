@@ -57,6 +57,11 @@ benchmark_disk_target() {
         args="${args} -s ${size}"
     fi
 
+    trace=$(get benchmark-disk trace)
+    if [ -n "${trace}" ]; then
+        args="${args} -t ${trace}"
+    fi
+
     for buffer in $(get benchmark-disk buffer); do
         maybe_bencher_run --project raft --testbed "${tag}" \
                           "sudo $(cmd_raft_benchmark) ${args} -b ${buffer}"
