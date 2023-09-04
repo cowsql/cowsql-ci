@@ -1,0 +1,16 @@
+name: Tests
+
+on:
+  - push
+  - pull_request
+
+jobs:
+  linting:
+    name: Linting
+    runs-on: ubuntu-22.04
+
+    steps:
+    - uses: actions/checkout@v3
+    - uses: azohra/shell-linter@latest
+      with:
+        exclude-paths: "bin/esh"
