@@ -16,6 +16,9 @@ setup_nvme() {
     sudo parted "${disk}" --script mklabel gpt
     sudo parted -a optimal "${disk}" --script mkpart primary ext4 2048 15GB
     sudo partprobe
+
+    # warm-up device/kernel caches or systems
+    sudo dd bs=4096 count=2048 if=/dev/random of=/dev/nullb0
 }
 
 setup_null_blk() {
@@ -70,4 +73,8 @@ setup_filesystem() {
             exit 1
             ;;
     esac
+
+    # warm-up device/kernel caches or systems
+    sudo dd bs=4096 count=2048 if=/dev/random of="${mountpoint}/dd" > /dev/null 2>&1
+    sudo rm "${mountpoint}/dd"
 }
