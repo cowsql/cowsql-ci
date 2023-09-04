@@ -47,7 +47,7 @@ block_driver_name() {
     echo $driver
 }
 
-benchmark_disk_target() {
+benchmark_disk_run() {
     tag=$1
     target=$2
     args="disk -d ${target}"
@@ -64,14 +64,13 @@ benchmark_disk_target() {
 
     for buffer in $(get benchmark-disk buffer); do
         maybe_bencher_run --project raft --testbed "${tag}" \
-                          "sudo $(cmd_raft_benchmark) ${args} -b ${buffer}"
+                          "$(cmd_raft_benchmark) ${args} -b ${buffer}"
     done
 }
 
 benchmark_disk() {
     for storage in $(get benchmark-disk storage); do
-        unmount=no
-
+        # Setup
         if echo "${storage}" | grep -qe ^/dev; then
             device=$(echo "${storage}" | cut -f 1 -d :)
             filesystem=$(echo "${storage}" | cut -f 2 -d :)
@@ -81,20 +80,28 @@ benchmark_disk() {
             setup_device "${device}"
             if [ "${filesystem}" = "raw" ]; then
                 target="${device}"
+                sudo chown "${USER}:${USER}" "${device}"
             else
                 setup_filesystem "${device}" "${filesystem}" /mnt
                 target=/mnt
-                unmount=yes
+                sudo chown "${USER}:${USER}" "${target}"
             fi
         else
+            device="none"
             tag="${testbed}"
             target="${storage}"
         fi
 
-        benchmark_disk_target "${tag}" "${target}"
+        # Run
+        benchmark_disk_run "${tag}" "${target}"
 
-        if [ "${unmount}" = "yes" ]; then
-            sudo umount "${target}"
+        # Teardown
+        if [ "${device}" != "none" ]; then
+            if [ "${filesystem}" = "raw" ]; then
+                sudo chown "root:root" "${device}"
+            else
+                sudo umount "${target}"
+            fi
         fi
     done
 }
