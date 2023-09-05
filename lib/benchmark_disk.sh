@@ -4,39 +4,6 @@
 testbed=
 version=
 
-maybe_bencher_run() {
-    token=$(get bencher token)
-    if [ -n "${token}" ]; then
-        branch=$version
-        bencher run --token "${token}" --branch "${branch}" "$@"
-    else
-        # Do not send reports, only run the command given as last argument.
-        # shellcheck disable=SC1083
-        eval last=\${$#}
-        # shellcheck disable=SC2154
-        ${last}
-    fi
-}
-
-block_driver_name() {
-    device=${1}
-
-    case $device in
-        /dev/nvme*)
-            driver=nvme
-            ;;
-        /dev/nullb*)
-            driver=null
-            ;;
-        *)
-            echo "unknown driver type for $device"
-            exit 1
-            ;;
-    esac
-
-    echo $driver
-}
-
 benchmark_disk_run() {
     tag=$1
     target=$2
