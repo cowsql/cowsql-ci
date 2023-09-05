@@ -91,10 +91,6 @@ for item in $(get global install); do
     install_"${item}"
 done
 
-for device in $(get global device); do
-    setup_device "${device}"
-done
-
 for version in $(get global version); do
     install_cowsql "${version}"
     run
