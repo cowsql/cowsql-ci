@@ -51,7 +51,7 @@ setup_filesystem() {
 
     case $filesystem in
         ext4)
-	    sudo mkfs.ext4 -O ^has_journal -F "${device}" > /dev/null 2>&1
+	    sudo mkfs.ext4 -F -O ^has_journal -E lazy_itable_init=0 "${device}" > /dev/null 2>&1
 	    sudo mount "${device}" "${mountpoint}"
             ;;
         btrfs)
