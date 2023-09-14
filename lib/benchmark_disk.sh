@@ -1,54 +1,8 @@
 . ../lib/setup.sh
+. ../lib/benchmark_common.sh
 
 testbed=
 version=
-
-cmd_raft_benchmark() {
-    cmd=raft-benchmark
-    if [ "${version}" = "local" ]; then
-        cmd=$(get raft path)/tools/$cmd
-    fi
-    if [ "$(get benchmark-disk sudo)" = "yes" ]; then
-        cmd="sudo ${cmd}"
-    fi
-    if grep -q isolcpus /proc/cmdline; then
-        cmd="taskset --cpu-list 3 ${cmd}"
-    fi
-    echo "${cmd}"
-}
-
-maybe_bencher_run() {
-    token=$(get bencher token)
-    if [ -n "${token}" ]; then
-        branch=$version
-        bencher run --token "${token}" --branch "${branch}" "$@"
-    else
-        # Do not send reports, only run the command given as last argument.
-        # shellcheck disable=SC1083
-        eval last=\${$#}
-        # shellcheck disable=SC2154
-        ${last}
-    fi
-}
-
-block_driver_name() {
-    device=${1}
-
-    case $device in
-        /dev/nvme*)
-            driver=nvme
-            ;;
-        /dev/nullb*)
-            driver=null
-            ;;
-        *)
-            echo "unknown driver type for $device"
-            exit 1
-            ;;
-    esac
-
-    echo $driver
-}
 
 benchmark_disk_run() {
     tag=$1
@@ -69,6 +23,13 @@ benchmark_disk_run() {
         maybe_bencher_run --project raft --testbed "${tag}" \
                           "$(cmd_raft_benchmark) ${args} -b ${buffer}"
     done
+
+    perf=$(get benchmark-disk perf)
+    if [ "${perf}" = "yes" ]; then
+        maybe_bencher_run --project raft --testbed "${tag}" \
+                          "$(cmd_raft_benchmark) ${args} -b ${buffer} -p"
+    fi
+
 }
 
 benchmark_disk() {
