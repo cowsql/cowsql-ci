@@ -23,6 +23,13 @@ benchmark_disk_run() {
         maybe_bencher_run --project raft --testbed "${tag}" \
                           "$(cmd_raft_benchmark) ${args} -b ${buffer}"
     done
+
+    perf=$(get benchmark-disk perf)
+    if [ "${perf}" = "yes" ]; then
+        maybe_bencher_run --project raft --testbed "${tag}" \
+                          "$(cmd_raft_benchmark) ${args} -b ${buffer} -p"
+    fi
+
 }
 
 benchmark_disk() {
