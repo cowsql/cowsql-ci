@@ -9,7 +9,8 @@ cmd_raft_benchmark() {
         cmd="sudo ${cmd}"
     fi
     if grep -q isolcpus /proc/cmdline; then
-        cmd="taskset --cpu-list 3 ${cmd}"
+        cpu="$(sed -e 's/.*isolcpus=//' /proc/cmdline | cut -f 1 -d ,)"
+        cmd="taskset --cpu-list ${cpu} ${cmd}"
     fi
     echo "${cmd}"
 }
