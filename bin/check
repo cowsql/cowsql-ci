@@ -1,6 +1,8 @@
 #!/bin/sh
 set -eu
 
+lscpu
+
 cd "$(dirname "${0}")"
 
 . ../lib/config.sh
