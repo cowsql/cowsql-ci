@@ -7,10 +7,11 @@ install_utils() {
 
     # Install bencher
     curl -s $bencher_releases_url | \
-        grep "browser_download_url.*_$(dpkg --print-architecture).deb" | \
-        cut -d : -f 2,3 | tr -d \" | wget -qi - -O /tmp/bencher.deb
+        grep "browser_download_url.*-linux-$(uname -m|tr _ -)" | \
+        cut -d : -f 2,3 | tr -d \" | wget -qi - -O /tmp/bencher
 
-    apt_install /tmp/bencher.deb
+    chmod 755 /tmp/bencher
+    sudo mv /tmp/bencher /usr/bin/bencher
 }
 
 install_cowsql() {
